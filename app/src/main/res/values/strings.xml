@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">test_trianglify</string>
+    <string name="generate">Generate</string>
+</resources>
