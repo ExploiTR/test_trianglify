@@ -2,12 +2,12 @@ package com.example.test_trianglify.trianglify.utilities.triangulator;
 
 import android.util.Log;
 
+import com.example.test_trianglify.trianglify.presenters.Presenter;
+import com.example.test_trianglify.trianglify.views.TrianglifyView;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import com.example.test_trianglify.trianglify.presenters.Presenter;
-import com.example.test_trianglify.trianglify.views.TrianglifyView;
 
 /**
  * A Java implementation of an incremental 2D Delaunay triangulation algorithm.
@@ -158,7 +158,7 @@ public class DelaunayTriangulation {
         int prog = 0;
         for (com.example.test_trianglify.trianglify.utilities.triangulator.Vector2D vector : getPointSet()) {
             maxCoordinate = Math.max(Math.max(vector.x, vector.y), maxCoordinate);
-            listener.onTriangulationGenerationInProgress(prog++, getPointSet().size(), "Finalising Grid");
+            listener.onTriangulationGenerationInProgress(getPointSet().size(), prog++, "Finalising Grid");
         }
 
         return maxCoordinate * 16.0f;

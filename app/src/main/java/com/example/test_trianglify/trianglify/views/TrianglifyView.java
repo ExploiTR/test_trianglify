@@ -93,14 +93,14 @@ public class TrianglifyView extends View implements TrianglifyViewInterface {
     private void attributeSetter(TypedArray typedArray) {
         //   bleedX = (int) typedArray.getDimension(R.styleable.TrianglifyView_bleedX, 100);
         //    bleedY = (int) typedArray.getDimension(R.styleable.TrianglifyView_bleedY, 100);
-        variance = (int) typedArray.getDimension(R.styleable.TrianglifyView_variance, 0);
+        variance = (int) typedArray.getDimension(R.styleable.TrianglifyView_variance, 64);
         cellSize = (int) typedArray.getDimension(R.styleable.TrianglifyView_cellSize, 32);
-        typeGrid = typedArray.getInt(R.styleable.TrianglifyView_gridType, 0);
+        typeGrid = typedArray.getInt(R.styleable.TrianglifyView_gridType, 2);
         fillTriangle = typedArray.getBoolean(R.styleable.TrianglifyView_fillTriangle, true);
-        drawStroke = typedArray.getBoolean(R.styleable.TrianglifyView_fillStrokes, false);
+        drawStroke = typedArray.getBoolean(R.styleable.TrianglifyView_fillStrokes, true);
         strokeSizeF = typedArray.getFloat(R.styleable.TrianglifyView_strokeSize, strokeSizeF);
-        palette = Palette.getPalette(typedArray.getInt(R.styleable.TrianglifyView_palette, 0));
-        randomColoring = typedArray.getBoolean(R.styleable.TrianglifyView_randomColoring, false);
+        palette = Palette.getPalette(typedArray.getInt(R.styleable.TrianglifyView_palette, 13));
+        randomColoring = typedArray.getBoolean(R.styleable.TrianglifyView_randomColoring, true);
         fillViewCompletely = typedArray.getBoolean(R.styleable.TrianglifyView_fillViewCompletely, false);
 
         bleedX = 70;

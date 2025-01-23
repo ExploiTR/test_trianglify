@@ -84,6 +84,17 @@ public class Vector2D {
         return this.y * vector.x - this.x * vector.y;
     }
 
+    public void set(float x, float y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    // Add copy constructor
+    public Vector2D(Vector2D other) {
+        this.x = other.x;
+        this.y = other.y;
+    }
+
     @NonNull
     @Override
     public String toString() {

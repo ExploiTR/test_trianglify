@@ -97,19 +97,27 @@ public class Circle implements Patterns {
         this.variance = variance;
     }
 
-    public List<Vector2D> generate() {
-        Vector2D center = new Vector2D(width - bleedX * 1f / 4, height - bleedY * 1f / 2);
+    @Override
+    public int getEstimatedPointCount() {
+        int maxRadius = Math.max(width + bleedX, height + bleedY);
+        int circleCount = maxRadius / cellSize;
+        return 1 + (circleCount * pointsPerCircle); // Center point + points per circle
+    }
 
-        grid.clear();
+    @Override
+    public void generateInto(List<Vector2D> target) {
+        Vector2D center = new Vector2D(width - bleedX * 1f / 4, height - bleedY * 1f / 2);
+        target.clear();
+        target.add(new Vector2D(center.x, center.y));
 
         int maxRadius = Math.max(width + bleedX, height + bleedY);
-        this.grid.add(center);
-
         double slice, angle;
         int x, y;
 
         cellSize = (int) (cellSize - 0.5F * cellSize);
         cellSize = Math.max(cellSize, 8);
+
+        Vector2D point = new Vector2D(0, 0); // Reuse single Vector2D
 
         for (int radius = cellSize; radius < maxRadius; radius += cellSize) {
             slice = 2 * Math.PI / pointsPerCircle;
@@ -117,10 +125,10 @@ public class Circle implements Patterns {
                 angle = slice * i;
                 x = (int) (center.x + radius * Math.cos(angle)) + (variance > 0 ? random.nextInt(variance) : 0);
                 y = (int) (center.y + radius * Math.sin(angle)) + (variance > 0 ? random.nextInt(variance) : 0);
-                this.grid.add(new Vector2D(x, y));
+
+                point.set(x, y);
+                target.add(new Vector2D(point.x, point.y));
             }
         }
-
-        return grid;
     }
 }

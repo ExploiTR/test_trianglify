@@ -146,7 +146,7 @@ public class DTIterativeLegalize {
         int prog = 0;
         for (Vector2D vector : getPointSet()) {
             maxCoordinate = Math.max(Math.max(vector.x, vector.y), maxCoordinate);
-            listener.onTriangulationGenerationInProgress(prog++, getPointSet().size(), "Finalising Grid");
+            listener.onTriangulationGenerationInProgress(getPointSet().size(), prog++, "Finalising Grid");
         }
 
         return maxCoordinate * 16.0f;
@@ -187,7 +187,7 @@ public class DTIterativeLegalize {
             }
         }
 
-        if(TrianglifyView.ENABLE_GC){
+        if (TrianglifyView.ENABLE_GC) {
             System.gc();
         }
 

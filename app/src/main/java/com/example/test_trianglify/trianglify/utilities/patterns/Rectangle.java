@@ -1,10 +1,10 @@
 package com.example.test_trianglify.trianglify.utilities.patterns;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.example.test_trianglify.trianglify.utilities.ThreadLocalRandom;
 import com.example.test_trianglify.trianglify.utilities.triangulator.Vector2D;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by suyash on 12/3/17.
@@ -38,26 +38,33 @@ public class Rectangle implements Patterns {
         grid = new ArrayList<>();
     }
 
-    /**
-     * Generates array of points arranged in a grid of rectangles with deviation from their positions
-     * on the basis of bleed value.
-     *
-     * @return List of Vector2D containing points that resembles rectangular grid
-     */
     @Override
-    public List<Vector2D> generate() {
-        grid.clear();
+    public int getEstimatedPointCount() {
+        int cols = (width + 2 * bleedX) / cellSize + 1;
+        int rows = (height + 2 * bleedY) / cellSize + 1;
+        return cols * rows;
+    }
+
+    @Override
+    public void generateInto(List<Vector2D> target) {
+        target.clear();
 
         int x, y;
+        Vector2D point = new Vector2D(0, 0); // Reuse single Vector2D
+
         for (int j = 0; j < height + 2 * bleedY; j += cellSize) {
             for (int i = 0; i < width + 2 * bleedX; i += cellSize) {
                 x = i + (variance > 0 ? random.nextInt(variance) : 0);
                 y = j + (variance > 0 ? random.nextInt(variance) : 0);
-                this.grid.add(new Vector2D(x, y));
+
+                // Update point values instead of creating new object
+                point.x = x;
+                point.y = y;
+
+                // Add copy of point to list
+                target.add(new Vector2D(point.x, point.y));
             }
         }
-
-        return grid;
     }
 }
 

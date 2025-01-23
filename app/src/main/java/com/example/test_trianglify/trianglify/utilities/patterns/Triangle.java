@@ -1,10 +1,10 @@
 package com.example.test_trianglify.trianglify.utilities.patterns;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.example.test_trianglify.trianglify.utilities.ThreadLocalRandom;
 import com.example.test_trianglify.trianglify.utilities.triangulator.Vector2D;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * <a href="https://music.youtube.com/watch?v=yiJ5k2vBtlw">Click this link to see documentation</a>
@@ -37,29 +37,33 @@ public class Triangle implements Patterns {
         grid = new ArrayList<>();
     }
 
-    /**
-     * Generates array of points arranged in a triangular grid with deviation from their positions
-     * on the basis of bleed value.
-     *
-     * @return List of Vector2D containing points that resembles a triangular grid
-     */
     @Override
-    public List<Vector2D> generate() {
-        grid.clear();
+    public int getEstimatedPointCount() {
+        int numRows = (height + 2 * bleedY) / cellSize;
+        int numCols = (width + 2 * bleedX) / cellSize;
+        return numRows * numCols;
+    }
+
+    @Override
+    public void generateInto(List<Vector2D> target) {
+        target.clear();
 
         int numRows = (height + 2 * bleedY) / cellSize;
         int numCols = (width + 2 * bleedX) / cellSize;
 
+        Vector2D point = new Vector2D(0, 0); // Reuse single Vector2D
+
         for (int row = 0; row < numRows; row++) {
             for (int col = 0; col < numCols; col++) {
-                float x = col * cellSize + (row % 2 == 0 ? 0 : (float) cellSize / 2) + (variance > 0 ? random.nextInt(variance) : 0);
-                float y = row * (float) Math.sqrt(3) / 2 * cellSize + (variance > 0 ? random.nextInt(variance) : 0);
+                float x = col * cellSize + (row % 2 == 0 ? 0 : (float) cellSize / 2) +
+                        (variance > 0 ? random.nextInt(variance) : 0);
+                float y = row * (float) Math.sqrt(3) / 2 * cellSize +
+                        (variance > 0 ? random.nextInt(variance) : 0);
 
-                grid.add(new Vector2D(x, y));
+                point.set(x, y);
+                target.add(new Vector2D(point.x, point.y));
             }
         }
-
-        return grid;
     }
 }
 
