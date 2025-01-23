@@ -10,6 +10,9 @@ import com.example.test_trianglify.trianglify.utilities.colorizers.FixedPointsCo
 import com.example.test_trianglify.trianglify.utilities.patterns.Circle;
 import com.example.test_trianglify.trianglify.utilities.patterns.Patterns;
 import com.example.test_trianglify.trianglify.utilities.patterns.Rectangle;
+import com.example.test_trianglify.trianglify.utilities.triangulator.DTIterativeLegalize;
+import com.example.test_trianglify.trianglify.utilities.triangulator.NotEnoughPointsException;
+import com.example.test_trianglify.trianglify.utilities.triangulator.Vector2D;
 import com.example.test_trianglify.trianglify.views.TrianglifyViewInterface;
 
 import java.util.List;
@@ -68,7 +71,7 @@ public class Presenter {
         Log.v("Presenter", "generateNewColoredSoupAndInvalidate");
     }
 
-    private List<com.example.test_trianglify.trianglify.utilities.triangulator.Vector2D> generateGrid() {
+    private List<Vector2D> generateGrid() {
         int gridType = view.getTypeGrid();
         Patterns patterns;
 
@@ -96,7 +99,7 @@ public class Presenter {
         }
     }
 
-    private Triangulation getSoup(Presenter.TrianglifyGenerateListener listener) throws com.example.test_trianglify.trianglify.utilities.triangulator.NotEnoughPointsException {
+    private Triangulation getSoup(Presenter.TrianglifyGenerateListener listener) throws NotEnoughPointsException {
         if (!generateOnlyColor) triangulation = generateTriangulation(generateGrid(), listener);
         if (triangulation == null) triangulation = generateTriangulation(generateGrid(), listener);
         triangulation = generateColoredSoup(triangulation, listener);
@@ -104,8 +107,8 @@ public class Presenter {
         return triangulation;
     }
 
-    private Triangulation generateTriangulation(List<com.example.test_trianglify.trianglify.utilities.triangulator.Vector2D> inputGrid, Presenter.TrianglifyGenerateListener listener) throws com.example.test_trianglify.trianglify.utilities.triangulator.NotEnoughPointsException {
-        com.example.test_trianglify.trianglify.utilities.triangulator.DTIterativeLegalize triangulation = new com.example.test_trianglify.trianglify.utilities.triangulator.DTIterativeLegalize(inputGrid, listener);
+    private Triangulation generateTriangulation(List<Vector2D> inputGrid, Presenter.TrianglifyGenerateListener listener) throws NotEnoughPointsException {
+        DTIterativeLegalize triangulation = new DTIterativeLegalize(inputGrid, listener);
         triangulation.triangulate();
         return new Triangulation(triangulation.getTriangles());
     }

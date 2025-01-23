@@ -16,6 +16,12 @@ public class Triangle2D {
     public Vector2D c;
     private int color;
 
+    public void set(Vector2D a, Vector2D b, Vector2D c) {
+        this.a = a;
+        this.b = b;
+        this.c = c;
+    }
+
     /**
      * Constructor of the 2D triangle class used to create a new triangle
      * instance from three 2D vectors describing the triangle's vertices.

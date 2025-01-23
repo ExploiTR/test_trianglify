@@ -21,17 +21,115 @@ public class DTIterativeLegalize {
     private List<Vector2D> pointSet;
     private TriangleSoup triangleSoup;
 
-    /**
-     * Constructor of the SimpleDelaunayTriangulation class used to create a new
-     * triangulation instance.
-     *
-     * @param pointSet The point set to be triangulated
-     */
+    private static class EdgePool {
+        private final Edge2D[] edges;
+        private int currentIndex = 0;
+
+        public EdgePool(int size) {
+            edges = new Edge2D[size];
+            for (int i = 0; i < size; i++) {
+                edges[i] = new Edge2D(null, null);
+            }
+        }
+
+        public Edge2D obtain(Vector2D a, Vector2D b) {
+            if (currentIndex >= edges.length) {
+                return new Edge2D(a, b);
+            }
+            Edge2D edge = edges[currentIndex++];
+            edge.a = a;
+            edge.b = b;
+            return edge;
+        }
+
+        public void reset() {
+            currentIndex = 0;
+        }
+    }
+
+    private static class TrianglePool {
+        private final Triangle2D[] triangles;
+        private int currentIndex = 0;
+
+        public TrianglePool(int size) {
+            triangles = new Triangle2D[size];
+            for (int i = 0; i < size; i++) {
+                triangles[i] = new Triangle2D(null, null, null);
+            }
+        }
+
+        public Triangle2D obtain(Vector2D a, Vector2D b, Vector2D c) {
+            if (currentIndex >= triangles.length) {
+                // Instead of resetting, create new triangle if pool is exhausted
+                return new Triangle2D(a, b, c);
+            }
+            Triangle2D triangle = triangles[currentIndex++];
+            triangle.a = a;
+            triangle.b = b;
+            triangle.c = c;
+            triangle.setColor(0); // Reset color to ensure clean state
+            return triangle;
+        }
+
+        public void reset() {
+            currentIndex = 0;
+        }
+    }
+
+    private final EdgePool edgePool;
+    private final TrianglePool trianglePool;
+
     public DTIterativeLegalize(List<Vector2D> pointSet, Presenter.TrianglifyGenerateListener listener) {
         this.pointSet = pointSet;
         this.triangleSoup = new TriangleSoup();
         this.listener = listener;
+        // Estimate pool sizes based on point count
+        int estimatedEdges = pointSet.size() * 6;
+        int estimatedTriangles = pointSet.size() * 4;
+        this.edgePool = new EdgePool(estimatedEdges);
+        this.trianglePool = new TrianglePool(estimatedTriangles);
         listener.onTriangulationGenerationInProgress(1, 1, "Preparing Triangulation");
+    }
+
+    /**
+     * This method legalizes edges iteratively by flipping all illegal edges.
+     *
+     * @param triangle  The triangle
+     * @param edge      The edge to be legalized
+     * @param newVertex The new vertex
+     */
+    private void legalizeEdge(Triangle2D triangle, Edge2D edge, Vector2D newVertex) {
+        Stack<EdgeTrianglePair> edgesToCheck = new Stack<>();
+        edgesToCheck.push(new EdgeTrianglePair(edge, triangle));
+
+        while (!edgesToCheck.isEmpty()) {
+            EdgeTrianglePair pair = edgesToCheck.pop();
+            Edge2D currentEdge = pair.edge;
+            Triangle2D currentTriangle = pair.triangle;
+
+            Triangle2D neighbourTriangle = triangleSoup.findNeighbour(currentTriangle, currentEdge);
+
+            if (neighbourTriangle != null && neighbourTriangle.isPointInCircumCircle(newVertex)) {
+                triangleSoup.remove(currentTriangle);
+                triangleSoup.remove(neighbourTriangle);
+
+                Vector2D noneEdgeVertex = neighbourTriangle.getNoneEdgeVertex(currentEdge);
+
+                // Use triangle pool instead of creating new triangles
+                Triangle2D firstTriangle = trianglePool.obtain(noneEdgeVertex, currentEdge.a, newVertex);
+                Triangle2D secondTriangle = trianglePool.obtain(noneEdgeVertex, currentEdge.b, newVertex);
+
+                triangleSoup.add(firstTriangle);
+                triangleSoup.add(secondTriangle);
+
+                edgesToCheck.push(new EdgeTrianglePair(
+                        edgePool.obtain(noneEdgeVertex, currentEdge.a),
+                        firstTriangle));
+                edgesToCheck.push(new EdgeTrianglePair(
+                        edgePool.obtain(noneEdgeVertex, currentEdge.b),
+                        secondTriangle));
+            }
+        }
     }
 
     /**
@@ -46,6 +144,9 @@ public class DTIterativeLegalize {
             return;
         }
 
+        edgePool.reset();
+        trianglePool.reset();
+
         triangleSoup = new TriangleSoup();
 
         if (pointSet == null || pointSet.size() < 3) {
@@ -58,7 +159,8 @@ public class DTIterativeLegalize {
         final Vector2D p2 = new Vector2D(3.0f * maxCoordinate, 0.0f);
         final Vector2D p3 = new Vector2D(-3.0f * maxCoordinate, -3.0f * maxCoordinate);
 
-        final Triangle2D superTriangle = new Triangle2D(p1, p2, p3);
+        // Use triangle pool for super triangle
+        final Triangle2D superTriangle = trianglePool.obtain(p1, p2, p3);
 
         triangleSoup.add(superTriangle);
 
@@ -152,46 +254,46 @@ public class DTIterativeLegalize {
         return maxCoordinate * 16.0f;
     }
 
-    /**
-     * This method legalizes edges iteratively by flipping all illegal edges.
-     *
-     * @param triangle  The triangle
-     * @param edge      The edge to be legalized
-     * @param newVertex The new vertex
-     */
-    private void legalizeEdge(Triangle2D triangle, Edge2D edge, Vector2D newVertex) {
-        Stack<EdgeTrianglePair> edgesToCheck = new Stack<>();
-        edgesToCheck.push(new EdgeTrianglePair(edge, triangle));
-
-        while (!edgesToCheck.isEmpty()) {
-            EdgeTrianglePair pair = edgesToCheck.pop();
-            Edge2D currentEdge = pair.edge;
-            Triangle2D currentTriangle = pair.triangle;
-
-            Triangle2D neighbourTriangle = triangleSoup.findNeighbour(currentTriangle, currentEdge);
-
-            if (neighbourTriangle != null && neighbourTriangle.isPointInCircumCircle(newVertex)) {
-                triangleSoup.remove(currentTriangle);
-                triangleSoup.remove(neighbourTriangle);
-
-                Vector2D noneEdgeVertex = neighbourTriangle.getNoneEdgeVertex(currentEdge);
-
-                Triangle2D firstTriangle = new Triangle2D(noneEdgeVertex, currentEdge.a, newVertex);
-                Triangle2D secondTriangle = new Triangle2D(noneEdgeVertex, currentEdge.b, newVertex);
-
-                triangleSoup.add(firstTriangle);
-                triangleSoup.add(secondTriangle);
-
-                edgesToCheck.push(new EdgeTrianglePair(new Edge2D(noneEdgeVertex, currentEdge.a), firstTriangle));
-                edgesToCheck.push(new EdgeTrianglePair(new Edge2D(noneEdgeVertex, currentEdge.b), secondTriangle));
-            }
-        }
-
-        if (TrianglifyView.ENABLE_GC) {
-            System.gc();
-        }
-
-    }
+//    /**
+//     * This method legalizes edges iteratively by flipping all illegal edges.
+//     *
+//     * @param triangle  The triangle
+//     * @param edge      The edge to be legalized
+//     * @param newVertex The new vertex
+//     */
+//    private void legalizeEdge(Triangle2D triangle, Edge2D edge, Vector2D newVertex) {
+//        Stack<EdgeTrianglePair> edgesToCheck = new Stack<>();
+//        edgesToCheck.push(new EdgeTrianglePair(edge, triangle));
+//
+//        while (!edgesToCheck.isEmpty()) {
+//            EdgeTrianglePair pair = edgesToCheck.pop();
+//            Edge2D currentEdge = pair.edge;
+//            Triangle2D currentTriangle = pair.triangle;
+//
+//            Triangle2D neighbourTriangle = triangleSoup.findNeighbour(currentTriangle, currentEdge);
+//
+//            if (neighbourTriangle != null && neighbourTriangle.isPointInCircumCircle(newVertex)) {
+//                triangleSoup.remove(currentTriangle);
+//                triangleSoup.remove(neighbourTriangle);
+//
+//                Vector2D noneEdgeVertex = neighbourTriangle.getNoneEdgeVertex(currentEdge);
+//
+//                Triangle2D firstTriangle = new Triangle2D(noneEdgeVertex, currentEdge.a, newVertex);
+//                Triangle2D secondTriangle = new Triangle2D(noneEdgeVertex, currentEdge.b, newVertex);
+//
+//                triangleSoup.add(firstTriangle);
+//                triangleSoup.add(secondTriangle);
+//
+//                edgesToCheck.push(new EdgeTrianglePair(new Edge2D(noneEdgeVertex, currentEdge.a), firstTriangle));
+//                edgesToCheck.push(new EdgeTrianglePair(new Edge2D(noneEdgeVertex, currentEdge.b), secondTriangle));
+//            }
+//        }
+//
+//        if (TrianglifyView.ENABLE_GC) {
+//            System.gc();
+//        }
+//
+//    }
 
     public void shuffle() {
         Collections.shuffle(pointSet);
